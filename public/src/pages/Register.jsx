@@ -1,11 +1,14 @@
 import React, {useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import styled from "styled-components";
 import Logo from '../assets/logo.svg';
 import {ToastContainer, toast} from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import axios from "axios";
+import { registerRoute } from '../utils/APIRoutes';
 
 export default function Register(){
+    const navigate = useNavigate ()
     const [values, setValues] = useState({
         username: "",
         email: "",
@@ -20,18 +23,27 @@ export default function Register(){
             theme:"dark"
     }
 
-    const handleSubmit = (event) =>{
+    const handleSubmit = async (event) =>{
         event.preventDefault();
-        handleValidation()
-    }
+        if (handleValidation()){
+            console.log("in validation", registerRoute)
+            const {password, confirmPassword, username, email} = values;
+            const {data} = await axios.post(registerRoute, {
+            username, 
+            email, 
+            password,
+        });
+        if(data.status===false){
+            toast.error(data.msg, toastOptions)
+        }
+        if (data.status === true){
+            localStorage.setItem('chat-app-user', JSON.stringify(data.user));
+            navigate("/");
+        }
+        }
+    };
 
-        // const notify = () => toast.error("Wow so easy!", toastOptions);
-        // return (
-        //   <div>
-        //     <button onClick={notify}>Notify!</button>
-        //     <ToastContainer />
-        //   </div>
-        // );
+ 
       
     const handleValidation = () =>{
         const {password, confirmPassword, username, email} = values;
@@ -44,7 +56,7 @@ export default function Register(){
             toast.error("Username should be greater than 3 characters", toastOptions);
             return false;
         } else if (password.length < 8){
-            toast.error("Password should be equal or  greater than 3 characters", toastOptions);
+            toast.error("Password should be equal or  greater than 8 characters", toastOptions);
             return false;
         } else if (email===""){
             toast.error("email is required", toastOptions);
@@ -61,7 +73,7 @@ export default function Register(){
     <form onSubmit={(event)=>handleSubmit(event)} action="">
         <div className='brand'>
             <img src={Logo} alt="Logo" />
-            <h1>snappy</h1>
+            <h1>MonkeyChat</h1>
         </div>
         <input type="text" placeholder='Username' name='username' onChange={(e) => handleChange(e)}/>
         <input type="email" placeholder='Email' name='email' onChange={(e) => handleChange(e)}/>
